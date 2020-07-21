@@ -1,0 +1,23 @@
+{
+  "name": "mysql-tools",
+  "version": "1.0.0",
+  "description": "a simple mysql tools for nodejs",
+  "main": "index.ts",
+  "dependencies": {
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iy88/mysql-tools.git"
+  },
+  "keywords": [
+    "mysql"
+  ],
+  "author": "iy88",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/iy88/mysql-tools/issues"
+  },
+  "homepage": "https://github.com/iy88/mysql-tools#readme"
+}

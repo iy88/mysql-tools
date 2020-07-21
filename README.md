@@ -1,2 +1,2 @@
 # mysql-tools
-mysql tools for nodejs
+a simple mysql tools for nodejs
