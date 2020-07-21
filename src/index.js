@@ -98,17 +98,17 @@ class MySQLTools {
 
   /**
    *
-   * @param col
+   * @param exp
    * @param table
    * @param any
    * @param cb
    * @returns {MySQLTools}
    */
-  select(col, table, any, cb) {
+  select(exp, table, any, cb) {
     if (this.pool) {
       if (this.config.database || this.db) {
-        if (col && table) {
-          let sql = `select ${col} from ${this.db ? this.db + '.' + table : table}`;
+        if (exp && table) {
+          let sql = `select ${exp} from ${this.db ? this.db + '.' + table : table}`;
           if (any && typeof any === 'object') {
             if (any.where) {
               any.where.condition ? sql += ` where ${any.where.condition}` : '';
@@ -281,15 +281,15 @@ class MySQLTools {
                 typeof any.ands[i][any.ands[i].keys()[0]] === 'number' ? sql += ` and ${any.ands[i].keys[0]}=${any.ands[i][any.ands[i].keys()[0]]}` : sql += ` and ${any.ands[i].keys[0]}='${any.ands[i][any.ands[i].keys()[0]]}'`;
               }
             }
-            if(any.ands && any.or){
+            if (any.ands && any.or) {
               let key = any.or.keys()[0];
               let o = any.or;
-              typeof o[key] === 'number' ? sql+=` or ${key}=${o[key]}` : sql+=` or ${key}='${o[key]}'`;
+              typeof o[key] === 'number' ? sql += ` or ${key}=${o[key]}` : sql += ` or ${key}='${o[key]}'`;
             }
           }
-          if(typeof any === 'function' || typeof cb === 'function'){
-            return this.doSql(sql,cb || any); 
-          }else{
+          if (typeof any === 'function' || typeof cb === 'function') {
+            return this.doSql(sql, cb || any);
+          } else {
             return this.doSql(sql);
           }
         } else {
