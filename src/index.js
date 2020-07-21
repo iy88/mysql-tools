@@ -118,6 +118,8 @@ class MySQLTools {
             if (any.limit) {
               sql = `${sql} limit ${any.limit}`;
             }
+          } else if (typeof any === 'string') {
+            sql += any;
           }
           if (any && typeof any === 'function' || typeof cb === 'function') {
             return this.doSql(sql, cb || any);
@@ -286,6 +288,8 @@ class MySQLTools {
               let o = any.or;
               typeof o[key] === 'number' ? sql += ` or ${key}=${o[key]}` : sql += ` or ${key}='${o[key]}'`;
             }
+          } else if (typeof any === 'string') {
+            sql += any;
           }
           if (typeof any === 'function' || typeof cb === 'function') {
             return this.doSql(sql, cb || any);
