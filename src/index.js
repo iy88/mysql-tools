@@ -303,5 +303,4 @@ class MySQLTools {
     }
   }
 }
-
 module.exports = MySQLTools;
