@@ -234,31 +234,74 @@ class MySQLTools {
    */
   insert(table, pairs, cb) {
     if (this.pool) {
-      let sql = `insert into ${table} (${Object.keys(pairs).join()}) values (`;
-      for (let i = 0; i < Object.keys(pairs).length; i++) {
-        typeof Object.keys(pairs)[i] === 'number' ? sql+=Object.keys(pairs)[i]: sql+=`'${Object.keys(pairs)[i]}'`;
-        if (i !== Object.keys(pairs).length - 1) {
-          sql += ',';
+      if (table) {
+        if (pairs) {
+          let sql = `insert into ${table} (${Object.keys(pairs).join()}) values (`;
+          for (let i = 0; i < Object.keys(pairs).length; i++) {
+            typeof Object.keys(pairs)[i] === 'number' ? sql += Object.keys(pairs)[i] : sql += `'${Object.keys(pairs)[i]}'`;
+            if (i !== Object.keys(pairs).length - 1) {
+              sql += ',';
+            }
+          }
+          sql += ')';
+          if (cb) {
+            return this.doSql(sql, cb);
+          } else {
+            return this.doSql(sql);
+          }
+        } else {
+          throw new Error('please input data');
         }
+      } else {
+        throw new Error('please input table name');
       }
-      sql+=')';
-      if(cb){
-        return this.doSql(sql,cb);
-      }else{
-        return this.doSql(sql);
-      }
+
     } else {
       throw new Error('please config first');
     }
   }
 
-  update(table,pairs,any,cb){
-    if(this.pool){
-
-    }else{
-      throw new Error('')
+  update(table, pairs, any, cb) {
+    if (this.pool) {
+      if (table) {
+        if (pairs) {
+          let sql = `update ${table} set `
+          let keys = Object.keys(pairs);
+          for (let i = 0; i < keys.length; i++) {
+            typeof pairs[keys[i]] === 'number' ? sql += `${keys[i] + '=' + pairs[keys[i]]}` : sql += `${keys[i] + '="' + pairs[keys[i]]}"`;
+            if (i !== Object.keys(pairs).length - 1) {
+              sql += ',';
+            }
+          }
+          if (typeof any === 'object') {
+            sql += ' where ';
+            typeof any.main[any.main.keys()[0]] === 'number' ? sql += any.main.keys()[0] + '=' + any.main[any.main.keys()[0]] : sql += any.main.keys()[0] + '="' + any.main[any.main.keys()[0]] + '"';
+            if (any.ands) {
+              for (let i = 0; i < any.ands.length; i++) {
+                typeof any.ands[i][any.ands[i].keys()[0]] === 'number' ? sql += ` and ${any.ands[i].keys[0]}=${any.ands[i][any.ands[i].keys()[0]]}` : sql += ` and ${any.ands[i].keys[0]}='${any.ands[i][any.ands[i].keys()[0]]}'`;
+              }
+            }
+            if(any.ands && any.or){
+              let key = any.or.keys()[0];
+              let o = any.or;
+              typeof o[key] === 'number' ? sql+=` or ${key}=${o[key]}` : sql+=` or ${key}='${o[key]}'`;
+            }
+          }
+          if(typeof any === 'function' || typeof cb === 'function'){
+            return this.doSql(sql,cb || any); 
+          }else{
+            return this.doSql(sql);
+          }
+        } else {
+          throw new Error('please input data');
+        }
+      } else {
+        throw new Error('please input table name')
+      }
+    } else {
+      throw new Error('please config first');
     }
   }
-
 }
+
 module.exports = MySQLTools;
