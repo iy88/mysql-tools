@@ -2,7 +2,7 @@
  * @Author: iy88 
  * @Date: 2020-07-21 22:04:11 
  * @Last Modified by: iy88
- * @Last Modified time: 2020-07-22 11:25:13
+ * @Last Modified time: 2020-07-22 16:46:42
  */
 const mysql = require('mysql')
 
@@ -121,8 +121,8 @@ class MySQLTools {
               any.where.and ? sql += ` and ${any.where.and}` : '';
               any.where.or ? sql += ` or ${any.where.or}` : '';
             }
-            if (any.limit) {
-              sql = `${sql} limit ${any.limit}`;
+            if (any.limit && any.limit.start) {
+              sql = `${sql} limit ${any.limit.start} ${any.limit.end ? ','+any.limit.end : ''}`;
             }
           } else if (typeof any === 'string') {
             sql += ' ' + any;
