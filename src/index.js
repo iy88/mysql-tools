@@ -1,8 +1,8 @@
 /*
  * @Author: iy88 
  * @Date: 2020-07-21 22:04:11 
- * @Last Modified by:   iy88 
- * @Last Modified time: 2020-07-21 22:04:11 
+ * @Last Modified by: iy88
+ * @Last Modified time: 2020-07-22 11:25:13
  */
 const mysql = require('mysql')
 
@@ -125,7 +125,7 @@ class MySQLTools {
               sql = `${sql} limit ${any.limit}`;
             }
           } else if (typeof any === 'string') {
-            sql += any;
+            sql += ' ' + any;
           }
           if (any && typeof any === 'function' || typeof cb === 'function') {
             return this.doSql(sql, cb || any);
@@ -246,7 +246,7 @@ class MySQLTools {
         if (pairs) {
           let sql = `insert into ${table} (${Object.keys(pairs).join()}) values (`;
           for (let i = 0; i < Object.keys(pairs).length; i++) {
-            typeof Object.keys(pairs)[i] === 'number' ? sql += Object.keys(pairs)[i] : sql += `'${Object.keys(pairs)[i]}'`;
+            typeof pairs[Object.keys(pairs)[i]] === 'number' ? sql += pairs[Object.keys(pairs)[i]] : sql += `'${pairs[Object.keys(pairs)[i]]}'`;
             if (i !== Object.keys(pairs).length - 1) {
               sql += ',';
             }
@@ -283,10 +283,12 @@ class MySQLTools {
           }
           if (typeof any === 'object') {
             sql += ' where ';
-            typeof any.main[any.main.keys()[0]] === 'number' ? sql += any.main.keys()[0] + '=' + any.main[any.main.keys()[0]] : sql += any.main.keys()[0] + '="' + any.main[any.main.keys()[0]] + '"';
+            typeof any.main[Object.keys(any.main)[0]] === 'number' ? sql += Object.keys(any.main)[0] + '=' + any.main[Object.keys(any.main)[0]] : sql += Object.keys(any.main)[0] + '="' + any.main[Object.keys(any.main)[0]] + '"';
             if (any.ands) {
               for (let i = 0; i < any.ands.length; i++) {
-                typeof any.ands[i][any.ands[i].keys()[0]] === 'number' ? sql += ` and ${any.ands[i].keys[0]}=${any.ands[i][any.ands[i].keys()[0]]}` : sql += ` and ${any.ands[i].keys[0]}='${any.ands[i][any.ands[i].keys()[0]]}'`;
+                let key = Object.keys(any.ands[i])[0];
+                let value = any.ands[i][key];
+                typeof value === 'number' ? sql += ` and ${key}=${value}` : sql += ` and ${key}='${value}'`;
               }
             }
             if (any.ands && any.or) {
@@ -310,6 +312,22 @@ class MySQLTools {
       }
     } else {
       throw new Error('please config first');
+    }
+  }
+  truncate(type, name, cb) {
+    if (type) {
+      if (name) {
+        let sql = `truncate ${type} ${name}`;
+        if (typeof cb === 'function') {
+          return this.doSql(sql, cb);
+        } else {
+          return this.doSql(sql);
+        }
+      } else {
+        throw new Error('please input name');
+      }
+    } else {
+      throw new Error('please input type');
     }
   }
 }

@@ -4,12 +4,16 @@
   "description": "a simple mysql tools for nodejs",
   "main": "index.ts",
   "dependencies": {
+    "chalk": "^4.1.0",
     "mysql": "^2.18.1"
   },
   "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iy88/mysql-tools.git"
+  },
+  "scripts": {
+    "test": "node test/main.js"
   },
   "keywords": [
     "mysql"
