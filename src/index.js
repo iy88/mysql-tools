@@ -2,7 +2,7 @@
  * @Author: iy88 
  * @Date: 2020-07-21 22:04:11 
  * @Last Modified by: iy88
- * @Last Modified time: 2020-07-22 16:46:42
+ * @Last Modified time: 2020-07-23 11:02:04
  */
 const mysql = require('mysql')
 
@@ -11,8 +11,9 @@ const mysql = require('mysql')
  */
 class MySQLTools {
   /**
-   *
+   * MySQLtools constructor
    * @param config
+   * @param logger 
    */
   constructor(config, logger) {
     if (config) {
@@ -25,53 +26,49 @@ class MySQLTools {
   }
 
   /**
-   *
-   * @param config
-   * @returns {MySQLTools}
+   * mysql config
+   * @param config 
    */
   conf(config) {
     if (config) {
       this.pool = mysql.createPool(config);
       this.config = config;
-      return this
+      return this;
     } else {
-      throw new Error('param lost');
+      throw new ReferenceError('param lose');
     }
   }
 
   /**
-   *
-   * @param resolve
-   * @param reject
-   * @returns {Promise|*}
+   * then
+   * @param resolve 
+   * @param reject 
    */
   then(resolve, reject) {
     if (this.__promise__) {
       return this.__promise__.then(resolve, reject);
     } else {
-      return Promise.resolve().then(resolve, reject);
+      return Promise.resolve(undefined).then(resolve, reject);
     }
   }
 
   /**
-   *
+   * use database
    * @param databaseName
-   * @returns {MySQLTools}
    */
   use(databaseName) {
     if (databaseName) {
       this.db = databaseName;
-      return this
+      return this;
     } else {
-      throw new Error('param lost');
+      throw new ReferenceError('param lose');
     }
   }
 
   /**
-   *
-   * @param sql
-   * @param cb
-   * @returns {MySQLTools}
+   * do sql
+   * @param sql 
+   * @param cb 
    */
   doSql(sql, cb) {
     if (this.pool) {
@@ -79,77 +76,35 @@ class MySQLTools {
         this.pool.getConnection((getConnectionError, connection) => {
           getConnectionError ? cb(getConnectionError) : '';
           if (this.logger) {
-            this.logger(mysql.format(sql));
+            this.logger(mysql.format(sql, []));
           }
-          connection.query(mysql.format(sql), cb);
+          connection.query(mysql.format(sql, []), cb);
         })
       } else {
         this.__promise__ = new Promise((resolve, reject) => {
           this.pool.getConnection((getConnectionError, connection) => {
             getConnectionError ? reject(getConnectionError) : '';
             if (this.logger) {
-              this.logger(mysql.format(sql));
+              this.logger(mysql.format(sql, []));
             }
-            connection.query(mysql.format(sql), (queryError, results, fields) => {
+            connection.query(mysql.format(sql, []), (queryError, results, fields) => {
               resolve({ error: queryError, results, fields })
             });
           })
-        });
+        })
       }
-      return this
+      return this;
     } else {
-      throw new Error('please config first');
+      throw new ReferenceError('please config first');
     }
   }
 
   /**
-   *
-   * @param exp
-   * @param table
-   * @param any
-   * @param cb
-   * @returns {MySQLTools}
-   */
-  select(exp, table, any, cb) {
-    if (this.pool) {
-      if (this.config.database || this.db) {
-        if (exp && table) {
-          let sql = `select ${exp} from ${this.db ? this.db + '.' + table : table}`;
-          if (any && typeof any === 'object') {
-            if (any.where) {
-              any.where.condition ? sql += ` where ${any.where.condition}` : '';
-              any.where.and ? sql += ` and ${any.where.and}` : '';
-              any.where.or ? sql += ` or ${any.where.or}` : '';
-            }
-            if (any.limit && any.limit.start) {
-              sql = `${sql} limit ${any.limit.start} ${any.limit.end ? ','+any.limit.end : ''}`;
-            }
-          } else if (typeof any === 'string') {
-            sql += ' ' + any;
-          }
-          if (any && typeof any === 'function' || typeof cb === 'function') {
-            return this.doSql(sql, cb || any);
-          } else {
-            return this.doSql(sql);
-          }
-        } else {
-          throw new Error('param lost');
-        }
-      } else {
-        throw new Error('database not config');
-      }
-    } else {
-      throw new Error('please config first');
-    }
-  }
-
-  /**
-   *
-   * @param type
-   * @param name
-   * @param any
-   * @param cb
-   * @returns {MySQLTools}
+   * create
+   * @param type 
+   * @param name 
+   * @param any 
+   * @param cb 
    */
   create(type, name, any, cb) {
     if (this.pool) {
@@ -203,31 +158,46 @@ class MySQLTools {
   }
 
   /**
-   * 
-   * @param {String} type 
-   * @param {String} name 
-   * @param {Function} cb 
-   * @returns {MySQLTools}
+   * select
+   * @param exp 
+   * @param table table name 
+   * @param any where and limit or callback function 
+   * @param cb callback function
    */
-  drop(type, name, any, cb) {
+  select(exp, table, any, cb) {
     if (this.pool) {
-      if (type === 'database' || type === 'table') {
-        if (name) {
-          let sql = `drop ${type} `;
-          if (any === true) {
-            sql += 'if exists ';
+      if (this.config.database || this.db) {
+        if (exp && table) {
+          let sql = `select ${exp} from ${this.db ? this.db + '.' + table : table}`;
+          if (any && typeof any === 'object') {
+            if (any.where?.main) {
+              sql += ' ';
+              let key = Object.keys(any.where.main)[0];
+              let value = any.where?.main[key];
+              typeof value === 'number' ? sql += `${key}=${value}` : `${key}='${value}'`;
+            }
+            if (any.where?.main && any.where?.ands) {
+              let keys = Object.keys(any.where.ands);
+              for (let i = 0; i < keys.length; i++) {
+                typeof any.where.ands[i][keys[i]] === 'number' ? sql += ` and ${keys[i]}=${any.where.ands[i][keys[i]]}` : sql += ` and ${keys[i]}='${any.where.ands[i][keys[i]]}'`;
+              }
+            }
+            if (any.limit && any.limit.start) {
+              sql = `${sql} limit ${any.limit.start} ${any.limit.end ? ',' + any.limit.end : ''}`;
+            }
+          } else if (typeof any === 'string') {
+            sql += ' ' + any;
           }
-          sql += name;
-          if (typeof cb === 'function' || typeof any === 'function') {
+          if (any && typeof any === 'function' || typeof cb === 'function') {
             return this.doSql(sql, cb || any);
           } else {
             return this.doSql(sql);
           }
         } else {
-          throw new Error('please input name');
+          throw new Error('param lost');
         }
       } else {
-        throw new Error('type is not support');
+        throw new Error('database not config');
       }
     } else {
       throw new Error('please config first');
@@ -235,10 +205,10 @@ class MySQLTools {
   }
 
   /**
-   * 
-   * @param {String} table 
-   * @param {Object} pairs 
-   * @param {Function} cb 
+   * insert
+   * @param table 
+   * @param pairs 
+   * @param cb 
    */
   insert(table, pairs, cb) {
     if (this.pool) {
@@ -269,6 +239,13 @@ class MySQLTools {
     }
   }
 
+  /**
+   * update
+   * @param table 
+   * @param pairs 
+   * @param any 
+   * @param cb 
+   */
   update(table, pairs, any, cb) {
     if (this.pool) {
       if (table) {
@@ -314,6 +291,45 @@ class MySQLTools {
       throw new Error('please config first');
     }
   }
+
+  /**
+   * drop
+   * @param type 
+   * @param name 
+   * @param any 
+   * @param cb 
+   */
+  drop(type, name, any, cb) {
+    if (this.pool) {
+      if (type === 'database' || type === 'table') {
+        if (name) {
+          let sql = `drop ${type} `;
+          if (any === true) {
+            sql += 'if exists ';
+          }
+          sql += name;
+          if (typeof cb === 'function' || typeof any === 'function') {
+            return this.doSql(sql, cb || any);
+          } else {
+            return this.doSql(sql);
+          }
+        } else {
+          throw new Error('please input name');
+        }
+      } else {
+        throw new Error('type is not support');
+      }
+    } else {
+      throw new Error('please config first');
+    }
+  }
+
+  /**
+   * truncate
+   * @param type 
+   * @param name 
+   * @param cb 
+   */
   truncate(type, name, cb) {
     if (type) {
       if (name) {
@@ -330,5 +346,6 @@ class MySQLTools {
       throw new Error('please input type');
     }
   }
+
 }
 module.exports = MySQLTools;
