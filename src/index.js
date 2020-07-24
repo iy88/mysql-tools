@@ -2,7 +2,7 @@
  * @Author: iy88 
  * @Date: 2020-07-21 22:04:11 
  * @Last Modified by: iy88
- * @Last Modified time: 2020-07-23 11:02:04
+ * @Last Modified time: 2020-07-24 23:42:56
  */
 const mysql = require('mysql')
 
@@ -289,6 +289,43 @@ class MySQLTools {
       }
     } else {
       throw new Error('please config first');
+    }
+  }
+
+  /**
+     * delete
+     * @param table 
+     * @param any 
+     * @param cb 
+     */
+  delete(table, any, cb) {
+    if (this.pool) {
+      if (table) {
+        let sql = `delete from ${table}`;
+        if (typeof any === 'object') {
+          if (any.where?.main) {
+            sql += ' ';
+            let key = Object.keys(any.where.main)[0];
+            let value = any.where?.main[key];
+            typeof value === 'number' ? sql += `${key}=${value}` : `${key}='${value}'`;
+          }
+          if (any.where?.main && any.where?.ands) {
+            let keys = Object.keys(any.where.ands);
+            for (let i = 0; i < keys.length; i++) {
+              typeof any.where.ands[i][keys[i]] === 'number' ? sql += ` and ${keys[i]}=${any.where.ands[i][keys[i]]}` : sql += ` and ${keys[i]}='${any.where.ands[i][keys[i]]}'`;
+            }
+          }
+        }
+        if (typeof any === 'function' || typeof cb === 'function') {
+          return this.doSql(sql, cb || any);
+        } else {
+          return this.doSql(sql);
+        }
+      } else {
+        throw new ReferenceError('please input table name');
+      }
+    } else {
+      throw new ReferenceError('please config first');
     }
   }
 
