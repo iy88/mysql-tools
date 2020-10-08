@@ -2,9 +2,9 @@
  * @Author: iy88 
  * @Date: 2020-07-21 22:04:11 
  * @Last Modified by: iy88
- * @Last Modified time: 2020-07-24 23:42:56
+ * @Last Modified time: 2020-10-08 15:06:19
  */
-const mysql = require('mysql')
+const mysql = require('mysql');
 
 /**
  * @constructor MySQLTools
@@ -79,6 +79,7 @@ class MySQLTools {
             this.logger(mysql.format(sql, []));
           }
           connection.query(mysql.format(sql, []), cb);
+          connection.release();
         })
       } else {
         this.__promise__ = new Promise((resolve, reject) => {
@@ -90,6 +91,7 @@ class MySQLTools {
             connection.query(mysql.format(sql, []), (queryError, results, fields) => {
               resolve({ error: queryError, results, fields })
             });
+            connection.release();
           })
         })
       }
@@ -170,16 +172,19 @@ class MySQLTools {
         if (exp && table) {
           let sql = `select ${exp} from ${this.db ? this.db + '.' + table : table}`;
           if (any && typeof any === 'object') {
-            if (any.where?.main) {
-              sql += ' ';
+            if (any.where.main) {
+              sql += ' where ';
               let key = Object.keys(any.where.main)[0];
-              let value = any.where?.main[key];
-              typeof value === 'number' ? sql += `${key}=${value}` : `${key}='${value}'`;
+              let value = any.where.main[key];
+              typeof value === 'number' ? sql += `${key}=${value}` : sql+=`${key}='${value}'`;
             }
-            if (any.where?.main && any.where?.ands) {
-              let keys = Object.keys(any.where.ands);
-              for (let i = 0; i < keys.length; i++) {
-                typeof any.where.ands[i][keys[i]] === 'number' ? sql += ` and ${keys[i]}=${any.where.ands[i][keys[i]]}` : sql += ` and ${keys[i]}='${any.where.ands[i][keys[i]]}'`;
+            if (any.where.main && any.where.ands) {
+              let pairs = any.where.ands;
+              // let keys = Object.keys(any.where.ands);
+              for (let i = 0; i < pairs.length; i++) {
+                let key = Object.keys(pairs[i]);
+                let value = pairs[i][key];
+                typeof value === 'number' ? sql += ` and ${key}=${value}` : sql += ` and ${key}='${value}'`;
               }
             }
             if (any.limit && any.limit.start) {
@@ -303,13 +308,13 @@ class MySQLTools {
       if (table) {
         let sql = `delete from ${table}`;
         if (typeof any === 'object') {
-          if (any.where?.main) {
+          if (any.where.main) {
             sql += ' ';
             let key = Object.keys(any.where.main)[0];
-            let value = any.where?.main[key];
+            let value = any.where.main[key];
             typeof value === 'number' ? sql += `${key}=${value}` : `${key}='${value}'`;
           }
-          if (any.where?.main && any.where?.ands) {
+          if (any.where.main && any.where.ands) {
             let keys = Object.keys(any.where.ands);
             for (let i = 0; i < keys.length; i++) {
               typeof any.where.ands[i][keys[i]] === 'number' ? sql += ` and ${keys[i]}=${any.where.ands[i][keys[i]]}` : sql += ` and ${keys[i]}='${any.where.ands[i][keys[i]]}'`;
